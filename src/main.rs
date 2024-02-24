@@ -1,6 +1,6 @@
 use std::{self, fmt::Write, io::Read, thread};
 use gtk4 as gtk;
-use gtk::{prelude::*, TextBuffer};
+use gtk::{prelude::*, ScrolledWindow, TextBuffer};
 use gtk:: Button;
 mod libhttp;
 
@@ -22,15 +22,17 @@ fn main() {
             .column_spacing(4)
             .row_spacing(4)
             .build();
-        let button = but_create("Send");
         let test_output = gtk::TextView::builder()
             .vscroll_policy(gtk::ScrollablePolicy::Minimum)
             .overflow(gtk::Overflow::Hidden)
-            .vexpand(false)
             .buffer(&buffer)
+            .editable(false)
             .build();
+        let button = but_create("Send");
+        let scrollable_window = ScrolledWindow::new();
+        scrollable_window.set_child(Some(&test_output));
         layout.attach(&button, 0, 0, 50, 10);
-        layout.attach(&test_output, 0, 50, 50, 78);
+        layout.attach(&scrollable_window, 0, 50, 50, 78);
         button.connect_clicked(move |_|{
             let result = thread::spawn(||{
                 let mut buf = String::new();
