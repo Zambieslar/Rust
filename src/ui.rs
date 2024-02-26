@@ -6,7 +6,7 @@ pub mod ui{
     use gtk4 as gtk;
     use gtk::{prelude::*, CssProvider, EntryBuffer, ScrolledWindow, Text, TextBuffer, TextView};
     use gtk:: Button;
-    use openssl::ssl::{SslAlert, SslConnector, SslStream};
+    use openssl::ssl::{HandshakeError, SslAlert, SslConnector, SslStream};
     use crate::libhttp;
 
     fn but_create(label: &str) -> Button {
@@ -69,24 +69,18 @@ pub mod ui{
                 let badge_context = text_badge_data.clone().text();
                 let server_context = text_server.clone().text();
                 // Spawn thread to handle the HTTP request
-                let result = thread::spawn(move || -> Result<String, std::io::Error>{
+                let result = thread::spawn(move || -> Result<String, std::io::Error> {
                     let mut buf = String::new();
                     let (mut stream, req) = libhttp::ssl_connect(&server_context, &badge_context);
-                    stream.ssl_write(req.as_bytes()).unwrap();
-                    stream.read_to_string(&mut buf);
-                    Ok(buf)
+                    match stream {
+                        Ok(..) => {
+                            stream.ssl_write(req.as_bytes()).unwrap();
+                            stream.read_to_string(&mut buf);
+                            Ok(buf)
+                        }
+                    }
                 }).join();
-                match result {
-                    Ok(..) => {
-
-                        textview_buffer.clone().write_str(result.unwrap().unwrap().as_str()).unwrap();
-                    }
-                    Err(..) => {
-                        textview_buffer.clone().write_str(result.unwrap().unwrap().as_str());
-                    }
-                }
-
-            });
+             });
             // Create the main window
             let window = gtk4::ApplicationWindow::builder()
                 .application(app)
