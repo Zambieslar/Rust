@@ -69,23 +69,20 @@ pub mod ui{
             button.connect_clicked(move |_|{
                 let badge_context = text_badge_data.clone().text();
                 let server_context = text_server.clone().text();
-                let req = format!("{{\"data\": [{{\"type\": \"rawBadgeData\", \"attributes\": {{\"value\"\"{}\"}}}}]}}", badge_context);
                 // Spawn thread to handle the HTTP request
-                let result = thread::spawn(move || -> Result<String, HandshakeError<TcpStream>> {
-                    let mut buf = String::new();
-                    let mut stream = libhttp::ssl_connect(&server_context);
-                    match &mut stream {
-                        Ok(stream) => {
-                            stream.ssl_write(req.as_bytes()).unwrap();
-                            stream.read_to_string(&mut buf);
-                        }
-                        Err(error) => {
-                            textview_buffer.clone().write_str(format!("{:?}", error).as_str());
-                        }
-                    };
-                    Ok(buf)
-                }).join();
-                textview_buffer.clone().write_str(result.unwrap().unwrap().as_str());
+                let mut buf = String::new();
+                let req = format!("POST /authenticate/badge?t=2CBUBMnsrcRVnpbllN HTTP/1.0\r\nContent-Type: application/json\r\n\r\n{{\"data\": [{{\"type\": \"rawBadgeData\", \"attributes\": {{\"value\"\"{}\"}}}}]}}", badge_context);
+                let mut stream = libhttp::ssl_connect(&server_context);
+                match &mut stream {
+                    Ok(stream) => {
+                        stream.ssl_write(req.as_bytes()).unwrap();
+                        stream.read_to_string(&mut buf.clone()).unwrap();
+                        textview_buffer.clone().write_str(&buf).unwrap();
+                    }
+                    Err(error) => {
+                        textview_buffer.clone().write_str(format!("{}\n", error).as_str()).unwrap();
+                    }
+                };
              });
             // Create the main window
             let window = gtk4::ApplicationWindow::builder()
