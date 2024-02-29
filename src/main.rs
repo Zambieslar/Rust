@@ -1,3 +1,5 @@
+#![feature(mutex_unlock)]
+
 use gtk4 as gtk;
 use gtk::prelude::*;
 mod ui;
